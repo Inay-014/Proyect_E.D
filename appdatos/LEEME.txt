@@ -1,0 +1,13 @@
+Datos que usa SOLO la app (el motor nunca los lee; el motor lee unicamente los tres CSV de datos/).
+
+coordenadas.csv   nombre,lat,lon   Ubicacion de cada estacion para el mapa.
+                  OJO: estas coordenadas son APROXIMADAS (puestas a mano siguiendo cada troncal).
+                  Para tener las exactas, el script de conversion del GTFS debe escribir este mismo
+                  archivo a partir de stops.txt (stop_name, stop_lat, stop_lon).
+
+dias.csv          ruta,dia,primero,ultimo   (OPCIONAL; hoy NO existe)
+                  dia = LV (lunes a viernes) o SDF (sabados, domingos y festivos); horas HH:MM.
+                  horarios.csv no dice que dia opera cada viaje, asi que la app no puede separar
+                  los horarios por tipo de dia. Si el script de conversion genera este archivo a partir
+                  de calendar.txt + trips.txt + stop_times.txt del GTFS, "Consultar rutas" mostrara las
+                  dos columnas automaticamente.
