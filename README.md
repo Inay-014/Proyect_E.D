@@ -48,13 +48,6 @@ Dentro de `motor/` no se usa `dict`, `set`, `sorted`, `.sort()`, `min`/`max` sob
 
 No se envuelven: 25:10 se guarda como 1510 minutos. Así el servicio de madrugada sigue en orden dentro del mismo día de servicio y se compara con `<`.
 
-### Supuestos que hay que confirmar con el enunciado
-
-* Qué devuelve cada función. Hoy: `estado` → `(existe, abierta)`; `ranking` → lista de `(nombre, buses)`; `viaje` y `simular\_fila` → diccionario escrito como `{...}`. Si el enunciado pide otro formato, o si un literal `{...}` de salida cuenta como `dict` prohibido, hay que cambiarlo.
-* R5: una parada es cada estación abierta donde el bus se detiene; en una cerrada pasa de largo.
-* R7: una parada nueva hereda los buses al día de la parada anterior (para R6).
-* R10: los buses salen en 0, f, 2f…; cada uno lleva a quienes ya llegaron, en orden, hasta el cupo.
-
 ## Panel de rendimiento (R11)
 
 Pestaña **Rendimiento**: crea redes ×1, ×2, ×4… con copias de los CSV, mide cada operación y dibuja el tiempo junto a la curva esperada. Cada tarjeta trae la explicación de por qué crece así. R5 no se mide.
