@@ -1,0 +1,21 @@
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Configuración local
+.vscode/
+.idea/
+.env
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Caché de pruebas
+.pytest_cache/
