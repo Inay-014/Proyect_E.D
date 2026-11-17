@@ -33,7 +33,10 @@ RAIZ = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, RAIZ)
 FRONT = os.path.join(RAIZ, "front")
 DATOS = os.path.join(RAIZ, "datos")
-APP_DATOS = os.path.join(RAIZ, "app_datos")      # datos SOLO de la app (coordenadas del mapa, dias de operacion)
+APP_DATOS = os.path.join(RAIZ, "app_datos")
+# Compatibilidad con el nombre usado en el repositorio.
+if not os.path.isdir(APP_DATOS):
+    APP_DATOS = os.path.join(RAIZ, "appdatos")
 ESTADO = os.path.join(RAIZ, "estado_red.json")   # cierres y ediciones guardados (ver guardar_estado)
 
 
@@ -388,7 +391,7 @@ def h_rendimiento(q, c):
     por sesion (la medicion usa copias de los CSV originales, no depende de los cierres)."""
     from herramientas.rendimiento import medir
     f = int(c.get("factor", 1))
-    if f < 1 or f > 32:
+    if f not in (1, 2, 4, 8, 16, 32, 64, 128, 256, 512):
         raise ValueError("Factor fuera de rango.")
     with _CANDADO_REND:                      # una medicion a la vez: dos juntas se estorban y miden mal
         if c.get("forzar") or f not in _CACHE_REND:

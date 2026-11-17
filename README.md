@@ -1,240 +1,113 @@
 # Planeador de viajes TransMilenio
 
-## Descripción del proyecto
+Las decisiones de estructura, alternativas y complejidad están resumidas abajo y documentadas
+con más detalle en `motor/`. Cada integrante debe poder explicar las decisiones del grupo en la
+sustentación, incluso si no implementó ese requisito.
 
-El Planeador de viajes TransMilenio es una aplicación desarrollada en Python que permite consultar estaciones, buscar rutas, planear viajes y simular el abordaje de pasajeros utilizando información real de la red de TransMilenio.
-
-El proyecto fue desarrollado para la asignatura **Estructuras de Datos y Algoritmos**. Su objetivo es aplicar estructuras de datos y algoritmos propios para resolver problemas de consulta, planificación y operación de una red de transporte.
-
-La aplicación está dividida en tres componentes principales:
-
-- **Motor:** contiene las estructuras de datos y algoritmos que resuelven los requisitos.
-- **Datos:** contiene la información de estaciones, rutas y horarios en archivos CSV.
-- **Interfaz:** permite al usuario interactuar con el motor mediante una aplicación web.
-
-## 1. Requisitos del sistema
-
-- Python 3.9 o superior.
-- Navegador web actualizado.
-- Conexión a internet para visualizar los mapas de fondo. Sin conexión, la aplicación muestra las troncales dibujadas.
-
-## 2. Instalación y ejecución
-
-Descargar o clonar el repositorio y abrir una terminal en la carpeta principal del proyecto.
-
-Para iniciar la aplicación, ejecutar:
+## Arrancar la app (un solo comando)
 
 ```bash
 python app.py
 ```
 
-Abrir en el navegador:
+Abre `http://127.0.0.1:8000`. Solo usa la librería estándar de Python (3.9 o superior). Para ver los mapas de fondo se necesita internet; sin internet el mapa muestra las troncales dibujadas.
 
-```text
-http://127.0.0.1:8000
-```
-
-### Otros comandos
-
-Ejecutar la demostración por consola:
+Otros comandos:
 
 ```bash
 python main.py
-```
-
-Ejecutar todas las pruebas:
-
-```bash
 python pruebas/correr_todas.py
-```
-
-Verificar las restricciones del motor:
-
-```bash
+python pruebas/prueba_reingreso.py
 python revisar_prohibidos.py
 ```
 
-## 3. Estructura del proyecto
+La prueba de reingreso se ejecuta por separado porque no está incluida en `correr_todas.py`.
 
-| Carpeta o archivo | Descripción |
+## Estructura
+
+| Carpeta | Contenido |
 |---|---|
-| `motor/` | Contiene las estructuras de datos y los algoritmos de R1 a R10. |
-| `datos/` | Contiene `estaciones.csv`, `rutas.csv` y `horarios.csv`. |
-| `app_datos/` | Contiene información adicional utilizada por la aplicación, como las coordenadas de las estaciones. |
-| `front/` | Contiene los archivos HTML, CSS, JavaScript y recursos gráficos de la interfaz. |
-| `herramientas/` | Contiene las herramientas de demostración y medición del rendimiento. |
-| `pruebas/` | Contiene las pruebas de los requisitos y las pruebas generales. |
-| `app.py` | Inicia la aplicación web. |
-| `main.py` | Ejecuta la demostración por consola. |
-| `revisar_prohibidos.py` | Comprueba el uso de elementos restringidos dentro del motor. |
-| `integrantes.md` | Registra los integrantes y sus responsabilidades. |
+| `motor/` | Toda la lógica. Contrato: `from motor import Red, simular_fila`. Un archivo por requisito (`r1_estado.py` … `r10_fila.py`). |
+| `datos/` | `estaciones.csv`, `rutas.csv`, `horarios.csv`. El motor solo lee estos tres. |
+| `app_datos/` | Datos que usa solo la app: ubicación de las estaciones para el mapa. La app también admite `appdatos/` si `app_datos/` no existe. |
+| `front/` + `app.py` | La app web; consulta y modifica la red mediante el motor, y sirve los archivos de interfaz. |
+| `herramientas/` | Medición del panel de rendimiento (R11), motor de demostración y conversor GTFS. |
+| `pruebas/` | Pruebas por requisito, casos adicionales y regresión de reingreso. |
 
-## 4. Funcionamiento del motor
+## Reglas del motor
 
-El motor está implementado en Python y contiene la lógica principal del proyecto.
+Dentro de `motor/` no se usa `dict`, `set`, `sorted`, `.sort()`, `min`/`max` sobre colecciones, `x in lista`, `.index()`, `.count()` ni las librerías prohibidas por el enunciado. Lo que hace sus veces:
 
-Su contrato de funcionamiento utiliza:
+- **`tabla_hash.py` — `TablaHash`**: tabla hash propia con encadenamiento, hash polinomial, duplicación al 75 % de carga y recorrido en orden de inserción. Reemplaza a `dict` y `set` en todo el motor.
+- **`ordenar.py` — `merge_sort`**: O(n log n) en el peor caso y estable.
+- **`indice_abiertas.py`**: arreglo ordenado + búsqueda binaria + árbol de Fenwick + lista enlazada de abiertas.
 
-```python
-from motor import Red, simular_fila
-```
+## Decisiones (R12)
 
-La clase `Red` permite consultar y modificar la red de transporte, mientras que `simular_fila` permite simular el abordaje de pasajeros.
+Los costos de acceso por tabla hash se expresan en promedio, suponiendo longitud de clave acotada; las inserciones y eliminaciones incluyen costos amortizados de redimensionamiento o compactación. No son garantías de peor caso ante colisiones. Las operaciones de historial sobre el extremo de las listas también tienen costo amortizado.
 
-### Requisitos implementados
+| Req | Estructura | Algoritmo | Alternativa descartada | O grande | Qué representa cada variable |
+|---|---|---|---|---|---|
+| R1 `estado` | `TablaHash` nombre → estación | Hash del nombre y búsqueda en la cubeta; devuelve `"ABIERTA"`, `"CERRADA"` o `"NO EXISTE"` | Lista secuencial, O(n); arreglo ordenado, O(log n) | O(1) promedio | n = estaciones |
+| R2 `autocompletar` | Arreglo ordenado + Fenwick + lista enlazada de abiertas | Búsqueda binaria del prefijo, salto a la primera abierta y avance de k pasos | Trie (más memoria y conteos por nodo); saltar cerradas una a una, O(n) | O(log n + k) | estaciones; k = pedidas |
+| R3 `rango` | La misma de R2 | Búsqueda binaria de `desde` y avance hasta pasar `hasta` | Filtrar todas cada vez, O(n) | O(log n + m) | estaciones; m = las del rango |
+| R4 `proximo_bus` | `TablaHash` estación → ruta → arreglo de minutos ordenado | Búsqueda binaria de la primera salida ≥ hora | Recorrer los horarios, O(h) | O(log h) | h = buses de esa ruta en esa estación |
+| R5 `viaje` | Recorridos enlazados + índice de rutas por estación + `TablaHash` de alcance | Barrido hacia adelante desde el origen y hacia atrás desde el destino; gana el de menos paradas | BFS sobre estaciones (no distingue la ruta); todos los pares de rutas, O(R²) | O(L) | L = paradas de las rutas que tocan origen y destino |
+| R6 `ranking` | Lista ordenada en caché | Cerrar, reabrir o editar invalida la caché; la próxima consulta positiva reconstruye con merge sort | Insertar o borrar en medio de la lista, O(n); ordenar tras cada cambio, O(n log n) | O(1) invalidación; O(k) con caché válida; O(n log n + k) reconstrucción y consulta (promedio respecto al hash) | n = estaciones; k = resultados devueltos |
+| R7 rutas | Lista doblemente enlazada por ruta + `TablaHash` estación → nodo | Hallar el nodo por hash, enlazar o soltar, actualizar totales e invalidar ranking | Arreglo por ruta, O(p) por desplazar | O(1) promedio amortizado agregar y quitar; O(p) recorrido | p = paradas de la ruta |
+| R8 cierres | Bandera en la estación + índice de abiertas | Cambiar la bandera, actualizar Fenwick y lista, invalidar ranking | Borrar la estación de todas las estructuras | O(log n) | estaciones |
+| R9 historial | Dos pilas (listas usadas solo por el final) | Guardar la operación, no una copia de la red; un cambio nuevo vacía rehacer | Copiar la red en cada cambio, O(n) | O(1) amortizado de pilas + costo de aplicar o invertir; O(log n) para cierres y O(1) promedio amortizado para ediciones | n = estaciones; un cambio nuevo puede liberar la pila de rehacer |
+| R10 `simular_fila` | Llegadas con posiciones originales + índice del primero en fila | Si ya vienen ordenadas evita ordenarlas; las llegadas justo a la hora de salida pueden abordar ese bus, hasta llenar el cupo | Cola con `pop(0)`, O(n²) | O(n + b log c) si ya están ordenadas; O(n log n + b log c) si no | n = pasajeros; b = buses usados; c = cupo |
 
-| Requisito | Funcionalidad |
-|---|---|
-| R1 | Consultar el estado de una estación. |
-| R2 | Autocompletar nombres de estaciones abiertas. |
-| R3 | Consultar estaciones dentro de un rango alfabético. |
-| R4 | Consultar el próximo bus de una ruta. |
-| R5 | Planear viajes directos o con un transbordo. |
-| R6 | Obtener el ranking de estaciones con más buses. |
-| R7 | Agregar, quitar y consultar paradas de rutas. |
-| R8 | Cerrar y reabrir estaciones. |
-| R9 | Deshacer y rehacer modificaciones. |
-| R10 | Simular una fila de abordaje de pasajeros. |
-| R11 | Medir y visualizar el rendimiento de las operaciones. |
-| R12 | Documentar y justificar las decisiones de estructuras y algoritmos. |
+### Consistencia de horarios y ranking
 
-## 5. Estructuras de datos y algoritmos
+Al reincorporar una parada, R7 consulta el número original de horarios para esa estación y ruta. Si es positivo, usa ese valor para el ranking. Si no hay horarios registrados, conserva el supuesto de usar el número de buses de la parada anterior; esto no crea nuevas horas de salida para R4. Deshacer y rehacer conservan el aporte registrado.
 
-El proyecto implementa estructuras propias para cumplir las restricciones del enunciado.
+### Horas como 25:10
 
-### Estructuras principales
+No se envuelven: 25:10 se guarda como 1510 minutos. Así el servicio de madrugada sigue en orden dentro del mismo día de servicio y se compara con `<`.
 
-- **Tabla hash (`tabla_hash.py`):** implementa una tabla hash propia con encadenamiento, hash polinomial y redimensionamiento al 75 % de carga.
-- **Ordenamiento (`ordenar.py`):** implementa Merge Sort, con complejidad O(n log n) en el peor caso y comportamiento estable.
-- **Índice de estaciones abiertas (`indice_abiertas.py`):** utiliza un arreglo ordenado, búsqueda binaria, árbol de Fenwick y lista enlazada de estaciones abiertas.
-- **Recorridos (`camino.py`):** implementa búsqueda en anchura mediante una cola y una tabla hash propia.
+### Contrato de salida
 
-### Decisiones de R12
+- R1 `estado` devuelve `"ABIERTA"`, `"CERRADA"` o `"NO EXISTE"`.
+- R5 `viaje` devuelve `None` si no hay viaje, `[]` si origen y destino son la misma estación, o una lista de tramos `(ruta, sube_en, baja_en)`.
+- R7 agregar y quitar devuelven `True` si cambian la ruta y `False` si no se puede; `recorrido` devuelve `[]` si la ruta no existe.
+- R8 cerrar y reabrir devuelven `False` si la estación no existe o ya tiene ese estado.
+- R10 devuelve, en el orden original de `llegadas`, los segundos de salida asignados a cada persona. Los buses salen en `frecuencia`, `2 * frecuencia`, …; una llegada justo a la hora de salida puede abordar ese bus si queda cupo.
 
-| Req. | Estructura | Algoritmo | Alternativa descartada | Complejidad |
-|---|---|---|---|---|
-| R1 | Tabla hash | Búsqueda por nombre | Búsqueda secuencial O(n) | O(1) promedio |
-| R2 | Arreglo ordenado, Fenwick y lista enlazada | Búsqueda binaria y recorrido de abiertas | Trie o recorrer cerradas una a una | O(log n + k) |
-| R3 | Índice ordenado | Búsqueda binaria y recorrido del rango | Filtrar todas las estaciones | O(log n + m) |
-| R4 | Tabla hash y arreglos ordenados | Búsqueda binaria del próximo horario | Recorrer todos los horarios | O(log h) |
-| R5 | Recorridos enlazados y tablas hash | Barridos desde origen y destino | Evaluar todos los pares de rutas | O(L) |
-| R6 | Lista ordenada en caché y tabla hash | Actualización de posiciones y Merge Sort inicial | Ordenar toda la red después de cada cambio | O(k) consulta; O(n) por cambio; O(n log n) al crear caché |
-| R7 | Lista doblemente enlazada y tabla hash | Enlazar o retirar nodos | Desplazar elementos de un arreglo | O(1) agregar y quitar; O(p) recorrido |
-| R8 | Bandera de estado e índice de abiertas | Actualización del estado y del índice | Eliminar la estación de todas las estructuras | O(log n) |
-| R9 | Dos pilas | Guardar y recuperar operaciones | Copiar toda la red después de cada cambio | O(1) más el costo de invertir |
-| R10 | Lista de llegadas y posiciones originales | Asignación ordenada de pasajeros a buses | Cola con `pop(0)` | O(n + b log c) si las llegadas están ordenadas; O(n log n + b log c) si no |
+Estos formatos describen el comportamiento implementado. Supuestos que deben confirmarse si el contrato del profesor establece otra regla: el viaje de una estación abierta a sí misma tiene cero tramos; las estaciones cerradas se pasan de largo y no cuentan como detenciones; no se admiten estaciones repetidas dentro de un recorrido; el ranking desempata por nombre alfabético.
 
-### Significado de las variables
+## Panel de rendimiento (R11)
 
-- `n`: cantidad de estaciones o pasajeros, según la operación.
-- `k`: cantidad de resultados solicitados.
-- `m`: cantidad de estaciones dentro del rango.
-- `h`: cantidad de buses de una ruta en una estación.
-- `L`: cantidad de paradas de las rutas involucradas.
-- `p`: cantidad de paradas de una ruta.
-- `b`: cantidad de buses utilizados.
-- `c`: capacidad de cada bus.
+Pestaña **Rendimiento**: duplica el tamaño de la red, cronometra las operaciones y compara sus tiempos con el crecimiento teórico. R5 no se mide.
 
-Las complejidades indicadas corresponden a las decisiones documentadas para las operaciones del motor.
+- Factores ×1 a ×32: copias de los CSV originales.
+- Factores ×64, ×128, ×256 y ×512: redes sintéticas ligeras de topología y densidad comparables entre sí. Con 147 estaciones de base, corresponden a 9.408, 18.816, 37.632 y 75.264 estaciones. No se mezclan las dos familias en una medición.
+- R6 mide por separado `ranking(10)` con caché válida y la consulta tras invalidar la caché mediante un cierre y una reapertura (R6F).
+- Los tiempos se expresan en microsegundos por llamada; se toma el mejor promedio de tres lotes. Las mediciones son empíricas, no una demostración matemática del Big-O.
 
-## 6. Reglas y restricciones del motor
+## Conversión de GTFS a CSV
 
-Dentro de `motor/` se deben respetar las prohibiciones establecidas en el enunciado.
-
-### Elementos prohibidos
-
-- `dict` y `set`.
-- `sorted()` y `.sort()`.
-- `min()` y `max()` sobre colecciones.
-- `x in lista`.
-- `.index()` y `.count()` para buscar elementos en listas.
-- `bisect`, `heapq`, `collections`, `functools` y librerías externas.
-
-### Elementos permitidos
-
-- Listas como arreglos.
-- Cadenas y sus métodos.
-- Recorridos mediante `for`.
-- Módulos `csv`, `time` y `random`.
-
-Las estructuras de datos necesarias deben estar implementadas por el equipo.
-
-## 7. Tratamiento de horarios
-
-Los horarios superiores a las 24 horas, como `25:10`, no se convierten al día siguiente.
-
-Se representan como minutos acumulados desde el inicio del día de servicio. Por ejemplo:
-
-```text
-25:10 = 1510 minutos
-```
-
-Esto permite mantener el orden de los servicios dentro del mismo día de operación.
-
-## 8. Panel de rendimiento (R11)
-
-La aplicación incluye una pestaña llamada **Rendimiento**, donde se mide el tiempo de ejecución de las operaciones utilizando redes de tamaños crecientes.
-
-Se generan redes de tamaño:
-
-- 1 vez el tamaño original.
-- 2 veces el tamaño original.
-- 4 veces el tamaño original.
-- Y así sucesivamente.
-
-Los resultados se representan mediante gráficas que comparan los tiempos medidos con el crecimiento esperado según la complejidad de cada algoritmo.
-
-El requisito R5 no se mide en este panel.
-
-## 9. Interfaz de la aplicación
-
-La aplicación web permite acceder a las siguientes funcionalidades:
-
-- **Viaje:** búsqueda y selección de estaciones mediante un mapa.
-- **Estaciones:** búsqueda, ranking, consulta de recorridos y estaciones cerradas.
-- **Próximo bus:** consulta del siguiente servicio disponible.
-- **Rutas:** edición de recorridos, deshacer y rehacer modificaciones.
-- **Hora pico:** simulación del abordaje de pasajeros.
-- **Rendimiento:** visualización de las mediciones de los algoritmos.
-
-## 10. Datos utilizados
-
-El proyecto utiliza tres archivos CSV principales para el funcionamiento del motor:
-
-- `estaciones.csv`
-- `rutas.csv`
-- `horarios.csv`
-
-Adicionalmente, la aplicación utiliza información de coordenadas almacenada en `app_datos/`.
-
-El motor debe trabajar con los archivos CSV y no depender exclusivamente de los datos de una red específica.
-
-## 11. Pruebas y verificación
-
-Para comprobar el funcionamiento del proyecto se dispone de pruebas individuales y generales dentro de `pruebas/`.
-
-Ejecutar:
+El conversor está en `herramientas/gtfs_a_csv.py`. Recibe un ZIP GTFS y una fecha de servicio en formato AAAAMMDD. Ejemplo de uso (la fecha debe estar incluida en el calendario del archivo):
 
 ```bash
-python pruebas/correr_todas.py
+python herramientas/gtfs_a_csv.py GTFS.zip --fecha 20210715
 ```
 
-Para revisar las restricciones:
+Genera `estaciones.csv`, `rutas.csv` y `horarios.csv` en `datos_generados/`, además de `coordenadas.csv` en `app_datos_generados/`. No sobrescribe por defecto los datos actuales. Usa el calendario de servicio, normaliza los nombres y separa las variantes y sentidos de los recorridos. Si encuentra una estación repetida no consecutiva dentro de un recorrido, informa un error porque el motor no admite ese caso.
 
-```bash
-python revisar_prohibidos.py
-```
+**Estado de los datos:** el conversor dispone de una prueba con un GTFS de ejemplo; queda pendiente verificar la conversión con el GTFS original de TransMilenio y validar los CSV obtenidos antes de sustituir los actuales. Las coordenadas actuales son aproximadas.
 
-La aplicación también debe probarse iniciando mediante:
+## La app
 
-```bash
-python app.py
-```
+- **Viaje**: buscador y mapa de estaciones. Al tocar una estación: punto de origen, punto de destino o consultar rutas.
+- **Estaciones**: buscar, ranking, el recorrido con la menor cantidad de estaciones entre dos (con el estado de cada una) y cerradas.
+- **Próximo bus**, **Rutas** (editar, deshacer y rehacer), **Hora pico** y **Rendimiento**.
 
-## 12. Consideraciones finales
+Extras del motor que usa la app (no son parte del contrato): `camino` (búsqueda en anchura con cola y tabla hash propias, O(V + E), en `motor/camino.py`), `rutas_en`, `todas`, `proximos_buses`, `servicios_en`, `cerradas`.
 
-El proyecto busca demostrar la aplicación práctica de estructuras de datos y algoritmos en un problema real de transporte público.
+## Integrantes y verificación
 
-Las decisiones de implementación deben poder justificarse durante la sustentación, incluyendo las estructuras seleccionadas, los algoritmos utilizados, las alternativas consideradas y sus respectivas complejidades.
+La distribución de requisitos y aportes se encuentra en `integrantes.md`.
 
-Para conocer la distribución de responsabilidades de los integrantes, consultar el archivo `integrantes.md`.
+Antes de integrar cambios, ejecutar las pruebas, la regresión de reingreso y el verificador de restricciones; comprobar también la aplicación y el panel de rendimiento. Guardar los resultados obtenidos y no afirmar que se ha validado la conversión del GTFS original hasta realizar dicha comprobación.

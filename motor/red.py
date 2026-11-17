@@ -235,7 +235,9 @@ class Red:
         if not self.tabla.existe(nueva):
             return False
         try:
-            aporte = self.rutas.agregar(ruta, nueva, despues_de)
+            cantidad = self.horarios.cantidad(nueva, ruta)
+            aporte = self.rutas.agregar(
+            ruta, nueva, despues_de, cantidad if cantidad > 0 else None)
         except (ValueError, KeyError):
             return False
         self._ranking.actualizar(nueva)

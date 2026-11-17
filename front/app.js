@@ -329,14 +329,15 @@ $("#form-fila").addEventListener("submit", async e => {
 const OPCIONES = ["O(1)", "O(log n)", "O(n)", "O(n log n)", "O(n²)"];
 const CRECE = { "O(1)": n => 1, "O(log n)": n => Math.log2(n), "O(n)": n => n, "O(n log n)": n => n * Math.log2(n), "O(n²)": n => n * n };
 const RANGO_OK = { "O(1)": [0, 1.5], "O(log n)": [0.6, 1.7], "O(n)": [1.4, 2.8], "O(n log n)": [1.5, 3.0], "O(n²)": [2.8, 6] };
-const ESPERADA_INICIAL = { R1: "O(1)", R2: "O(log n)", R3: "O(n)", R4: "O(log n)", R6: "O(1)", R7: "O(1)", R8: "O(log n)", R9: "O(log n)", R10: "O(n)" };
+const ESPERADA_INICIAL = { R1: "O(1)", R2: "O(log n)", R3: "O(n)", R4: "O(log n)", R6: "O(1)", R6F: "O(n log n)", R7: "O(1)", R8: "O(log n)", R9: "O(log n)", R10: "O(n)" };
 /* Explicación de cada medición (R11: va junto a la gráfica). Sale del diseño del motor; ajústenla si cambian una estructura. */
 const NOTAS = {
   R1: "Tabla hash propia: buscar un nombre exacto no depende de cuántas estaciones hay (O(1) promedio).",
   R2: "Búsqueda binaria en el arreglo ordenado y luego k resultados seguidos: O(log n + k). Con k fijo casi no crece.",
   R3: "O(log n + m). En esta prueba el rango cubre la mitad de las estaciones, así que m crece con n y la curva se ve lineal.",
   R4: "Búsqueda binaria en los horarios de UNA ruta en UNA estación: O(log h). Duplicar la red no cambia h, por eso se ve plana.",
-  R6: "Tras cerrar, abrir o editar, se reposiciona la estación afectada (O(n)); top(k) copia k elementos. La primera consulta ordena todo: O(n log n).",
+  R6: "Con caché válida, top(k) copia k elementos: O(k). Esta medición fija k = 10.",
+  R6F: "Cerrar y reabrir invalida la caché en O(1) por aviso. La siguiente consulta reconstruye con merge sort: O(n log n) promedio, más el costo O(log n) de los cambios de estado.",
   R7: "Tabla hash para hallar la parada y lista doblemente enlazada para enlazar o soltar el nodo: O(1).",
   R8: "La bandera cambia en O(1); actualizar el índice de abiertas (árbol de Fenwick) cuesta O(log n).",
   R9: "Dos pilas: O(1) de historial más invertir la operación (aquí un cierre, O(log n)).",
@@ -399,7 +400,7 @@ function pintarRendimiento(progreso) {
     <div class="tarjeta" style="margin-top:16px"><h2>Tiempos medidos</h2><div style="overflow:auto"><table class="tabla-rend">
     <tr><th>Operación</th>${medicion.tamanos.map(n => `<th>n=${n}</th>`).join("")}</tr>${filas}
     <tr><td>Carga de la red</td>${medicion.carga_s.map(s => `<td>${s} s</td>`).join("")}</tr></table></div>
-    <p class="ayuda" style="margin:10px 0 0">R5 no se mide (no tiene comparación en el curso). n = número de estaciones; cada paso duplica la red.</p></div>`;
+    <p class="ayuda" style="margin:10px 0 0">R5 no se mide. n = número de estaciones (R10: pasajeros). ×64–×512 usa redes sintéticas ligeras; compara dentro de cada grupo.</p></div>`;
   $$("[data-esp]", destino).forEach(s => s.onchange = () => { guardar("tm-esp-" + s.dataset.esp, s.value); pintarRendimiento(progreso); });
 }
 /* Se mide un tamaño a la vez y se pinta apenas llega: la primera gráfica sale en ~1 s en vez de
@@ -408,6 +409,7 @@ let midiendo = false;
 async function medir(forzar) {
   const factores = $$("#factores input:checked").map(c => +c.value).sort((a, b) => a - b);
   if (factores.length < 2) return aviso("Elige al menos dos tamaños para comparar.", "info");
+  if (factores.some(f => f < 64) && factores.some(f => f >= 64)) return aviso("Compara copias reales o redes sintéticas, no los dos grupos juntos.", "info");
   if (midiendo) return;
   midiendo = true; $("#btn-medir").disabled = true; $("#btn-remedir").disabled = true;
   const destino = $("#res-rend");
