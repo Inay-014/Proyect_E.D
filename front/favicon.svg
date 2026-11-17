@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 94"><g transform="rotate(-3 48 48)">
+    <path d="M8 36 Q8 14 30 14 H76 Q98 14 98 38 V62 Q98 74 86 74 H20 Q8 74 8 62 Z"
+          fill="#0a8f7f" stroke="#06433c" stroke-width="3"/>
+    <path d="M10 56 H96" stroke="#ffc83d" stroke-width="5"/>
+    <g fill="#d9fff7" stroke="#06433c" stroke-width="2">
+      <rect x="15" y="22" width="16" height="17" rx="4"/>
+      <rect x="35" y="22" width="16" height="17" rx="4"/>
+      <rect x="55" y="22" width="16" height="17" rx="4"/>
+      <rect x="75" y="22" width="16" height="17" rx="4"/>
+    </g>
+    <!-- caras apretadas contra los vidrios -->
+    <g stroke="#06433c" stroke-width="1.4">
+      <circle cx="23" cy="31" r="5.5" fill="#f2c7a5"/><circle cx="29" cy="33" r="4" fill="#c68b59"/>
+      <circle cx="43" cy="30" r="5.5" fill="#8d5a3b"/><circle cx="49" cy="34" r="3.8" fill="#f2c7a5"/>
+      <circle cx="62" cy="31" r="5.5" fill="#e8b48a"/><circle cx="68" cy="33" r="4" fill="#8d5a3b"/>
+      <circle cx="82" cy="30" r="5.5" fill="#c68b59"/><circle cx="88" cy="34" r="3.8" fill="#e8b48a"/>
+    </g>
+    <g fill="#06433c">
+      <circle cx="21.5" cy="30" r="1"/><circle cx="25" cy="30" r="1"/>
+      <circle cx="41.5" cy="29" r="1"/><circle cx="45" cy="29" r="1"/>
+      <circle cx="60.5" cy="30" r="1"/><circle cx="64" cy="30" r="1"/>
+      <circle cx="80.5" cy="29" r="1"/><circle cx="84" cy="29" r="1"/>
+    </g>
+    <!-- sudor -->
+    <path d="M30 8 q-3 5 0 7 q3 -2 0 -7z" fill="#5ec8f2"/>
+    <path d="M66 6 q-3 5 0 7 q3 -2 0 -7z" fill="#5ec8f2"/>
+    <!-- ruedas aplastadas -->
+    <g fill="#10231f" stroke="#06433c" stroke-width="2"><circle cx="30" cy="76" r="9"/><circle cx="78" cy="76" r="9"/></g>
+    <g fill="#ffc83d"><circle cx="30" cy="76" r="3"/><circle cx="78" cy="76" r="3"/></g>
+  </g></svg>
